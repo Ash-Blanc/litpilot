@@ -1,40 +1,52 @@
 <template>
-  <div class="min-h-screen bg-base-300 flex flex-col font-sans text-base-content">
-    <!-- ── Navigation ── -->
-    <header class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 border-b border-base-content/10 px-4 sm:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex items-center gap-2 no-underline group" aria-label="LitPilot Home">
-          <span class="text-2xl">📚</span>
-          <span class="text-xl font-extrabold tracking-tight">
-            Lit<span class="text-gradient">Pilot</span>
-          </span>
-        </a>
-      </div>
-      <div class="flex-none gap-2">
-        <a href="https://github.com" target="_blank" class="btn btn-ghost btn-circle" aria-label="GitHub">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-        </a>
-      </div>
-    </header>
+    <div class="min-h-screen flex flex-col font-sans selection:bg-primary/30">
+        <!-- ── Navigation ── -->
+        <header class="sticky top-0 z-50 px-4 sm:px-8 py-4">
+            <nav
+                class="max-w-7xl mx-auto bg-base-100/80 backdrop-blur-2xl rounded-3xl border border-base-content/10 shadow-xl px-6 py-3 flex items-center justify-between">
+                <div class="flex-1">
+                    <a href="/" class="flex items-center gap-2 no-underline group" aria-label="LitPilot Home">
+                        <BookOpen class="w-6 h-6 text-primary animate-float" />
+                        <span class="text-xl font-black tracking-tight font-heading">
+                            Lit<span class="text-primary">Pilot</span>
+                        </span>
+                    </a>
+                </div>
+                <div class="flex-none flex items-center gap-4">
+                    <a href="https://github.com/Ash-Blanc/litpilot" target="_blank"
+                        class="hover:text-primary transition-colors p-2" aria-label="GitHub">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                        </svg>
+                    </a>
+                </div>
+            </nav>
+        </header>
 
-    <!-- ── Main Content ── -->
-    <main class="flex-1 container mx-auto px-4 py-8 sm:py-12">
-      <router-view />
-    </main>
+        <!-- ── Main Content ── -->
+        <main class="flex-1 container mx-auto px-4 py-8 sm:py-12 relative z-10">
+            <router-view />
+        </main>
 
-    <!-- ── Footer ── -->
-    <footer class="footer footer-center p-6 bg-base-200 text-base-content/60 border-t border-base-content/5">
-      <aside>
-        <p class="text-sm">Built with ♥ for the TinyFish $2M Pre-Accelerator Hackathon 2026</p>
-      </aside>
-    </footer>
-  </div>
+        <!-- ── Footer ── -->
+        <footer class="mt-auto py-12 px-4 border-t border-white/5">
+            <div class="max-w-4xl mx-auto text-center space-y-4">
+                <p class="text-sm font-medium opacity-40 hover:opacity-100 transition-opacity">
+                    Built with ♥ for the TinyFish $2M Pre-Accelerator Hackathon 2026
+                </p>
+                <div class="flex justify-center gap-6 opacity-30 text-xs uppercase tracking-widest font-bold">
+                    <span>Agno SDK</span>
+                    <span>EMNLP 2025</span>
+                    <span>TinyFish Web Agent</span>
+                </div>
+            </div>
+        </footer>
+    </div>
 </template>
 
 <script setup>
-// App shell logic
+import { BookOpen } from 'lucide-vue-next'
 </script>
 
 <style scoped>

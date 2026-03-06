@@ -20,6 +20,7 @@ from agents.intent import (
 )
 from agents.executor import executor_agent
 from agents.knowledge import knowledge_agent
+from tools.fetch_history import get_browser_history
 
 # Ensure all agents have string IDs for the API routing
 text_summarizer_agent.id = "text-summarizer"
@@ -59,6 +60,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.get("/api/browser-history")
+def browser_history():
+    return get_browser_history()
 
 if __name__ == "__main__":
     import uvicorn

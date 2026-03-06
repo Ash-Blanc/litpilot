@@ -1,18 +1,89 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
     themes: all;
 }
 
+:root {
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+@theme {
+    --font-sans: 'Inter', sans-serif;
+}
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
+    /* Soft gradient using DaisyUI semantic colors */
+    background: radial-gradient(at 0% 0%, var(--fallback-p, oklch(var(--p)/0.1)) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, var(--fallback-s, oklch(var(--s)/0.1)) 0px, transparent 50%);
+    background-color: var(--fallback-b1, oklch(var(--b1)/1));
+    background-attachment: fixed;
+    min-height: 100vh;
     overflow-x: hidden;
 }
 
-/* Base custom gradient for the text */
-.text-gradient {
-    background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+}
+
+/* ── Refined Animations ── */
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-in {
+    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--fallback-p, oklch(var(--p)/0.3));
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--fallback-p, oklch(var(--p)/0.6));
 }

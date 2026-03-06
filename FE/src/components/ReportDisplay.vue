@@ -1,28 +1,41 @@
 <template>
-    <div class="card bg-base-100 shadow-2xl border border-base-content/5" v-if="content">
-        <div class="card-body p-6 sm:p-10">
+    <div class="bg-base-100/50 backdrop-blur-2xl rounded-3xl border border-base-content/10 shadow-2xl overflow-hidden"
+        v-if="content">
+        <div class="p-6 sm:p-12">
             <div
-                class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 pb-6 border-b border-base-content/5">
-                <h2 class="text-2xl font-black tracking-tight flex items-center gap-3">
-                    <span class="text-3xl">📋</span>
-                    Literature Review Report
-                </h2>
-                <div class="flex items-center gap-2">
-                    <button class="btn btn-ghost btn-sm sm:btn-md gap-2" @click="copyReport"
-                        :class="{ 'btn-success text-white': copied }">
-                        <span v-if="!copied">📋</span>
-                        <span v-else>✅</span>
-                        {{ copied ? 'Copied' : 'Copy' }}
+                class="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 pb-8 border-b border-base-content/10">
+                <div class="space-y-1 text-center sm:text-left">
+                    <div class="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Synthesis Complete
+                    </div>
+                    <h2 class="text-3xl font-black tracking-tight font-heading">
+                        Literature Review Report
+                    </h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="btn btn-ghost hover:bg-base-200 font-bold text-xs uppercase tracking-widest gap-2"
+                        @click="copyReport" :class="{ 'text-success': copied }">
+                        <Copy v-if="!copied" class="w-4 h-4" />
+                        <Check v-else class="w-4 h-4" />
+                        {{ copied ? 'Copied' : 'Copy MD' }}
                     </button>
-                    <button class="btn btn-secondary btn-sm sm:btn-md gap-2" @click="downloadReport">
-                        <span>💾</span>
-                        Download
+                    <button
+                        class="btn btn-primary px-6 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 border-none"
+                        @click="downloadReport">
+                        <Save class="w-4 h-4 mr-2" />
+                        Export .md
                     </button>
                 </div>
             </div>
 
-            <div class="prose prose-lg max-w-none prose-headings:text-base-content prose-p:text-base-content/80 prose-li:text-base-content/80 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none prose-pre:bg-base-300 prose-pre:border prose-pre:border-base-content/5"
-                v-html="renderedContent"></div>
+            <div class="prose prose-lg max-w-none 
+        prose-headings:font-heading prose-headings:font-black prose-headings:tracking-tight
+        prose-p:font-medium prose-p:leading-relaxed
+        prose-li:font-medium
+        prose-strong:font-bold
+        prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+        prose-code:text-primary prose-code:bg-primary/10 prose-code:px-2 prose-code:py-0.5 prose-code:rounded-lg prose-code:before:content-none prose-code:after:content-none
+        prose-pre:bg-base-300 prose-pre:border prose-pre:border-base-content/10 prose-pre:rounded-2xl
+        " v-html="renderedContent"></div>
         </div>
     </div>
 </template>
@@ -30,6 +43,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { marked } from 'marked'
+import { Copy, Check, Save } from 'lucide-vue-next'
 
 const props = defineProps({
     content: { type: String, default: '' },
@@ -69,7 +83,6 @@ function downloadReport() {
     URL.revokeObjectURL(url)
 }
 </script>
-
 <style scoped>
 /* Scoped styles kept minimal as we use DaisyUI typography plugin or Tailwind prose */
 /* Since it's marked as prose, make sure it has the class */

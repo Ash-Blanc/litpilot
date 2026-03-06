@@ -195,3 +195,18 @@ export async function reconstructHistory(notes) {
         return { reconstructed_intent: content, confidence: 0.5 };
     }
 }
+
+/**
+ * Fetch native browser history from the system.
+ */
+export async function getBrowserHistory() {
+    const res = await fetch(`${API_BASE}/api/browser-history`, {
+        method: 'GET',
+    });
+
+    if (!res.ok) {
+        throw new Error(`Browser history fetch failed: ${res.statusText}`);
+    }
+
+    return await res.json();
+}

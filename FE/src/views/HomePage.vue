@@ -1,79 +1,99 @@
 <template>
-    <div class="max-w-4xl mx-auto space-y-12">
+    <div class="max-w-4xl mx-auto space-y-16 py-8">
         <!-- ── Hero Section ── -->
-        <section class="text-center space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <section class="text-center space-y-8 animate-in">
             <div
-                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
-                <span>🤖</span>
-                <span>Powered by TinyFish Web Agent + EMNLP 2025</span>
+                class="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl">
+                <span class="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                <span>Decomposed Intent Extraction Engine</span>
             </div>
-            <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-none">
-                Your AI <span class="text-gradient">Research Autopilot</span>
+            <h1 class="text-5xl sm:text-7xl font-black tracking-tight leading-[0.9] font-heading">
+                Research <br /> <span class="text-primary">On Autopilot</span>
             </h1>
-            <p class="text-lg text-base-content/70 max-w-2xl mx-auto leading-relaxed">
-                Describe your partial research session. LitPilot infers your goal and
-                autonomously completes the literature review on live academic sites.
+            <p class="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed font-medium">
+                Describe your browsing steps. Our multi-model consensus engine infers your goal and autonomously
+                completes the review.
             </p>
         </section>
 
+        <!-- ── Step Indicator ── -->
         <div class="flex flex-col items-center">
-            <ul class="steps steps-vertical sm:steps-horizontal w-full max-w-2xl text-sm">
-                <li class="step" :class="{ 'step-primary': phase >= 0 }">Define Goal</li>
-                <li class="step" :class="{ 'step-primary': phase >= 2 }">Autonomous Execution</li>
-                <li class="step" :class="{ 'step-primary': phase >= 3 }">Research Report</li>
-            </ul>
+            <div class="flex items-center gap-4 sm:gap-8 w-full max-w-2xl">
+                <div v-for="(label, i) in ['Define', 'Execute', 'Report']" :key="i"
+                    class="flex-1 flex flex-col items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl flex items-center justify-center font-bold transition-all duration-500"
+                        :class="phase >= (i === 0 ? 0 : i + 1) ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white/5 border border-white/10 opacity-30'">
+                        {{ i + 1 }}
+                    </div>
+                    <span class="text-[10px] font-black uppercase tracking-widest transition-opacity duration-500"
+                        :class="phase >= (i === 0 ? 0 : i + 1) ? 'opacity-100' : 'opacity-20'">
+                        {{ label }}
+                    </span>
+                </div>
+            </div>
         </div>
 
         <!-- ── Phase 0: Input ── -->
-        <section class="card bg-base-100 shadow-xl border border-base-content/5 transition-all duration-500"
-            :class="{ 'opacity-50 scale-95 pointer-events-none': phase > 0 }">
-            <div class="card-body">
+        <section
+            class="bg-base-100/50 backdrop-blur-2xl rounded-3xl border border-base-content/10 shadow-2xl transition-all duration-700"
+            :class="{ 'opacity-20 blur-sm scale-95 pointer-events-none': phase > 0 }">
+            <div class="p-4 sm:p-8">
                 <InputForm v-model="description" :loading="inferring" @submit="handleInferIntent"
                     @files-changed="handleFilesChanged" @recall-history="showHistoryModal = true" />
             </div>
         </section>
 
         <!-- ── Phase 1: Implicit Inference (Subtle Loader) ── -->
-        <section v-if="phase === 1" class="flex flex-col items-center justify-center p-12 space-y-4 animate-pulse">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <p class="text-sm font-medium text-base-content/60">Synthesizing research strategy via Multi-Model
-                Consensus...</p>
+        <section v-if="phase === 1" class="flex flex-col items-center justify-center p-20 space-y-6 animate-in">
+            <div class="relative">
+                <div class="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+                <span class="loading loading-ring loading-lg text-primary relative z-10 scale-150"></span>
+            </div>
+            <div class="text-center space-y-2">
+                <p class="text-sm font-black uppercase tracking-widest text-primary">Orchestrating Consensus</p>
+                <p class="text-xs text-white/40 font-medium">Synthesizing research strategy across LLM experts...</p>
+            </div>
         </section>
 
         <!-- ── Phase 2: Execution Stream ── -->
-        <section v-if="phase >= 2" class="animate-in fade-in slide-in-from-bottom-10 duration-500">
+        <section v-if="phase >= 2" class="animate-in">
             <ExecutionStream :intent="intentData" :events="streamEvents" :done="executionDone"
                 :error="executionError" />
         </section>
 
         <!-- ── Phase 3: Final Report ── -->
-        <section v-if="phase >= 3" class="animate-in fade-in zoom-in-95 duration-500">
+        <section v-if="phase >= 3" class="animate-in delay-300">
             <ReportDisplay :content="reportContent" />
         </section>
 
         <!-- ── Reset Button ── -->
-        <div v-if="phase >= 3" class="flex justify-center py-8">
-            <button class="btn btn-outline btn-secondary" @click="resetAll">
-                🔄 Start New Research
+        <div v-if="phase >= 3" class="flex justify-center py-12">
+            <button class="btn btn-ghost hover:bg-white/5 gap-3 font-bold uppercase tracking-widest text-xs"
+                @click="resetAll">
+                <RotateCcw class="w-4 h-4" /> New Mission
             </button>
         </div>
 
         <!-- ── History Modal ── -->
-        <div v-if="showHistoryModal" class="modal modal-open">
-            <div class="modal-box max-w-2xl bg-base-100 border border-base-content/10">
-                <h3 class="font-bold text-lg">Recall Past Research</h3>
-                <p class="py-4 text-sm text-base-content/60">
-                    Paste notes, browser logs, or summaries from manual research you did days or weeks ago.
-                    LitPilot will reconstruct the context and build upon it.
+        <div v-if="showHistoryModal" class="modal modal-open backdrop-blur-xl">
+            <div
+                class="modal-box bg-base-100/80 backdrop-blur-2xl border border-base-content/10 p-10 max-w-2xl rounded-3xl shadow-2xl">
+                <h3 class="font-heading text-3xl font-black mb-2">Recall Past Data</h3>
+                <p class="text-sm text-white/50 mb-8 leading-relaxed font-medium">
+                    Paste rough notes or logs from research you did days/weeks ago.
+                    LitPilot will archaeologically reconstruct the context.
                 </p>
-                <textarea class="textarea textarea-bordered w-full h-48 font-mono text-sm" v-model="historyNotes"
-                    placeholder="e.g. Last week I was looking at EMNLP papers on agents. I found 3 papers about decomposition but wanted more focus on multi-model verification..."></textarea>
-                <div class="modal-action">
-                    <button class="btn btn-ghost" @click="showHistoryModal = false">Cancel</button>
-                    <button class="btn btn-primary" :disabled="!historyNotes.trim() || reconstructing"
-                        @click="handleHistoryImport">
+                <textarea
+                    class="textarea textarea-bordered bg-white/5 border-white/10 w-full h-48 font-mono text-xs focus:textarea-primary transition-all p-4"
+                    v-model="historyNotes" placeholder="Last week I was looking at EMNLP papers..."></textarea>
+                <div class="modal-action gap-4">
+                    <button class="btn btn-ghost font-bold text-xs uppercase"
+                        @click="showHistoryModal = false">Cancel</button>
+                    <button
+                        class="btn btn-primary px-8 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20"
+                        :disabled="!historyNotes.trim() || reconstructing" @click="handleHistoryImport">
                         <span v-if="reconstructing" class="loading loading-spinner"></span>
-                        {{ reconstructing ? 'Reconstructing...' : 'Restore Context' }}
+                        {{ reconstructing ? 'Restoring...' : 'Restore Context' }}
                     </button>
                 </div>
             </div>
@@ -84,10 +104,10 @@
 <script setup>
 import { ref } from 'vue'
 import InputForm from '../components/InputForm.vue'
-import IntentReview from '../components/IntentReview.vue'
 import ExecutionStream from '../components/ExecutionStream.vue'
 import ReportDisplay from '../components/ReportDisplay.vue'
 import { inferIntent, executeResearch, reconstructHistory } from '../composables/useApi.js'
+import { RotateCcw } from 'lucide-vue-next'
 
 // ── State ──
 const phase = ref(0)          // 0=input, 1=review, 2=executing, 3=report
