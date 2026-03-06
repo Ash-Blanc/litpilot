@@ -13,21 +13,34 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from agents.intent import text_summarizer_agent, vision_summarizer_agent, aggregator_agent
+from agents.intent import (
+    text_summarizer_agent, vision_summarizer_agent,
+    aggregator_mistral, aggregator_gpt, aggregator_gemini,
+    consensus_agent
+)
 from agents.executor import executor_agent
+from agents.knowledge import knowledge_agent
 
 # Ensure all agents have string IDs for the API routing
 text_summarizer_agent.id = "text-summarizer"
 vision_summarizer_agent.id = "vision-summarizer"
-aggregator_agent.id = "intent-aggregator"
+aggregator_mistral.id = "aggregator-mistral"
+aggregator_gpt.id = "aggregator-gpt"
+aggregator_gemini.id = "aggregator-gemini"
+consensus_agent.id = "intent-consensus"
 executor_agent.id = "litpilot-executor"
+knowledge_agent.id = "research-librarian"
 
 agent_os = AgentOS(
     agents=[
         text_summarizer_agent,
         vision_summarizer_agent,
-        aggregator_agent,
-        executor_agent
+        aggregator_mistral,
+        aggregator_gpt,
+        aggregator_gemini,
+        consensus_agent,
+        executor_agent,
+        knowledge_agent
     ]
 )
 

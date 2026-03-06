@@ -122,10 +122,68 @@ Rules:
 3. Output ONLY valid JSON — no markdown fences, no explanation.
 """)
 
-aggregator_agent = Agent(
-    name="Intent Aggregator (Stage 2)",
+# Stage 2 — Aggregators (Multi-Model)
+# We use multiple models to get diverse perspectives on the research goal.
+
+aggregator_mistral = Agent(
+    name="Aggregator (Mistral)",
     model=MistralChat(id="mistral-large-latest"),
     instructions=AGGREGATOR_INSTRUCTIONS,
+    markdown=False,
+    add_datetime_to_context=True,
+)
+
+aggregator_gpt = Agent(
+    name="Aggregator (GPT-4o)",
+    model=OpenRouter(id="openai/gpt-4o-mini"),
+    instructions=AGGREGATOR_INSTRUCTIONS,
+    markdown=False,
+    add_datetime_to_context=True,
+)
+
+aggregator_gemini = Agent(
+    name="Aggregator (Gemini Flash)",
+    model=OpenRouter(id="google/gemini-flash-1.5-8b"),
+    instructions=AGGREGATOR_INSTRUCTIONS,
+    markdown=False,
+    add_datetime_to_context=True,
+)
+
+# ─────────────────────────────────────────────────────────────
+# Stage 3 — Consensus & Synthesis
+# ─────────────────────────────────────────────────────────────
+
+CONSENSUS_INSTRUCTIONS = dedent("""\
+You are LitPilot's Research Director. You will receive several inferred
+research goals from different AI specialist models. 
+
+Your task: Compare these goals, identify common requirements, resolve any
+contradictions (e.g. if one model missed a specific paper venue mentioned
+by others), and synthesize the final, most robust research intent.
+
+Input format: A JSON object with model names as keys and their inferred intents as values.
+
+Output format: A single JSON object with:
+{
+  "inferred_intent": "Final synthesized goal sentence.",
+  "confidence": 0.0-1.0,
+  "key_topics": [...],
+  "suggested_sources": [...],
+  "output_format": "...",
+  "scope": { ... },
+  "synthesis_notes": "What was resolved or emphasized during consensus."
+}
+
+Rules:
+1. Be the 'Source of Truth' — synthesize for maximum utility and clarity.
+2. Ensure the final `inferred_intent` contains all necessary parameters for the Execution Agent.
+3. Output ONLY valid JSON.
+""")
+
+consensus_agent = Agent(
+    name="Consensus Director (Stage 3)",
+    model=MistralChat(id="mistral-large-latest"),
+    instructions=CONSENSUS_INSTRUCTIONS,
     markdown=False,
     add_datetime_to_context=True,
 )
@@ -169,29 +227,47 @@ def infer_intent(user_description: str, images: Optional[List[Dict[str, str]]] =
         
     summaries_text = stage1_response.content
 
-    # Stage 2: Aggregate
-    logger.info("Stage 2: Running Aggregator Agent")
+    # Stage 2: Parallel Aggregation
+    logger.info("Stage 2: Running Multi-Model Aggregation")
     stage2_prompt = (
         f"Here are the structured step summaries from a user's research session:\n\n"
         f"{summaries_text}\n\n"
         f"Infer the user's precise high-level research goal."
     )
-    stage2_response = aggregator_agent.run(stage2_prompt)
-    intent_text = stage2_response.content
+    
+    # Run aggregations
+    intent_m = aggregator_mistral.run(stage2_prompt).content
+    intent_g = aggregator_gpt.run(stage2_prompt).content
+    intent_f = aggregator_gemini.run(stage2_prompt).content
+
+    # Stage 3: Consensus Synthesis
+    logger.info("Stage 3: Running Consensus Synthesis")
+    consensus_prompt = json.dumps({
+        "expert_mistral": intent_m,
+        "detail_gpt4o": intent_g,
+        "speed_gemini": intent_f
+    }, indent=2)
+
+    stage3_response = consensus_agent.run(consensus_prompt)
+    final_intent_text = stage3_response.content
 
     # Try to parse JSON
-    import json
     try:
-        if "```json" in intent_text:
-            cleaned = intent_text.split("```json")[1].split("```")[0].strip()
-            intent_data = json.loads(cleaned)
+        if "```json" in final_intent_text:
+            cleaned = final_intent_text.split("```json")[1].split("```")[0].strip()
+            final_data = json.loads(cleaned)
         else:
-            intent_data = json.loads(intent_text)
+            final_data = json.loads(final_intent_text)
     except json.JSONDecodeError:
-        logger.error(f"Failed to parse JSON intent from: {intent_text}")
-        intent_data = {"inferred_intent": intent_text, "confidence": 0.5}
+        logger.error(f"Failed to parse JSON synthesis: {final_intent_text}")
+        final_data = {"inferred_intent": final_intent_text, "confidence": 0.5}
 
     return {
         "summaries": summaries_text,
-        "intent": intent_data,
+        "intent": final_data,
+        "raw_responses": {
+            "mistral": intent_m,
+            "gpt4o": intent_g,
+            "gemini": intent_f
+        }
     }

@@ -164,3 +164,34 @@ export function executeResearch(intent, { onEvent, onDone, onError }) {
 
     return { close: () => controller.abort() };
 }
+/**
+ * Reconstruct research intent from past manual notes (Archaeology).
+ * Targets the 'research-librarian' agent.
+ */
+export async function reconstructHistory(notes) {
+    const formData = new FormData();
+    formData.append('message', notes);
+    formData.append('stream', 'false');
+
+    const res = await fetch(`${API_BASE}/agents/research-librarian/runs`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!res.ok) {
+        throw new Error(`Archaeology agent failed: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    const content = data.content;
+
+    try {
+        if (content.includes("```json")) {
+            const cleaned = content.split("```json")[1].split("```")[0].trim();
+            return JSON.parse(cleaned);
+        }
+        return JSON.parse(content);
+    } catch {
+        return { reconstructed_intent: content, confidence: 0.5 };
+    }
+}

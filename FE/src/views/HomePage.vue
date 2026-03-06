@@ -1,75 +1,84 @@
 <template>
-  <div class="home-page container">
-    <!-- ── Hero Section ──────────────────────────── -->
-    <section class="hero animate-fade-in-up">
-      <div class="hero-badge">🤖 Powered by TinyFish Web Agent + EMNLP 2025 Research</div>
-      <h1>
-        Your AI <span class="text-gradient">Research Autopilot</span>
-      </h1>
-      <p class="hero-sub">
-        Describe your partial research session. LitPilot infers your goal and
-        autonomously completes the literature review on live academic sites.
-      </p>
-    </section>
+    <div class="max-w-4xl mx-auto space-y-12">
+        <!-- ── Hero Section ── -->
+        <section class="text-center space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
+                <span>🤖</span>
+                <span>Powered by TinyFish Web Agent + EMNLP 2025</span>
+            </div>
+            <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-none">
+                Your AI <span class="text-gradient">Research Autopilot</span>
+            </h1>
+            <p class="text-lg text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+                Describe your partial research session. LitPilot infers your goal and
+                autonomously completes the literature review on live academic sites.
+            </p>
+        </section>
 
-    <!-- ── Step Indicator ────────────────────────── -->
-    <div class="steps-bar">
-      <div class="step" :class="{ active: phase >= 0, done: phase > 0 }">
-        <span class="step-num">1</span>
-        <span class="step-label">Describe</span>
-      </div>
-      <div class="step-line" :class="{ active: phase > 0 }"></div>
-      <div class="step" :class="{ active: phase >= 1, done: phase > 1 }">
-        <span class="step-num">2</span>
-        <span class="step-label">Review Intent</span>
-      </div>
-      <div class="step-line" :class="{ active: phase > 1 }"></div>
-      <div class="step" :class="{ active: phase >= 2, done: phase >= 3 }">
-        <span class="step-num">3</span>
-        <span class="step-label">Execute & Report</span>
-      </div>
+        <div class="flex flex-col items-center">
+            <ul class="steps steps-vertical sm:steps-horizontal w-full max-w-2xl text-sm">
+                <li class="step" :class="{ 'step-primary': phase >= 0 }">Define Goal</li>
+                <li class="step" :class="{ 'step-primary': phase >= 2 }">Autonomous Execution</li>
+                <li class="step" :class="{ 'step-primary': phase >= 3 }">Research Report</li>
+            </ul>
+        </div>
+
+        <!-- ── Phase 0: Input ── -->
+        <section class="card bg-base-100 shadow-xl border border-base-content/5 transition-all duration-500"
+            :class="{ 'opacity-50 scale-95 pointer-events-none': phase > 0 }">
+            <div class="card-body">
+                <InputForm v-model="description" :loading="inferring" @submit="handleInferIntent"
+                    @files-changed="handleFilesChanged" @recall-history="showHistoryModal = true" />
+            </div>
+        </section>
+
+        <!-- ── Phase 1: Implicit Inference (Subtle Loader) ── -->
+        <section v-if="phase === 1" class="flex flex-col items-center justify-center p-12 space-y-4 animate-pulse">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <p class="text-sm font-medium text-base-content/60">Synthesizing research strategy via Multi-Model
+                Consensus...</p>
+        </section>
+
+        <!-- ── Phase 2: Execution Stream ── -->
+        <section v-if="phase >= 2" class="animate-in fade-in slide-in-from-bottom-10 duration-500">
+            <ExecutionStream :intent="intentData" :events="streamEvents" :done="executionDone"
+                :error="executionError" />
+        </section>
+
+        <!-- ── Phase 3: Final Report ── -->
+        <section v-if="phase >= 3" class="animate-in fade-in zoom-in-95 duration-500">
+            <ReportDisplay :content="reportContent" />
+        </section>
+
+        <!-- ── Reset Button ── -->
+        <div v-if="phase >= 3" class="flex justify-center py-8">
+            <button class="btn btn-outline btn-secondary" @click="resetAll">
+                🔄 Start New Research
+            </button>
+        </div>
+
+        <!-- ── History Modal ── -->
+        <div v-if="showHistoryModal" class="modal modal-open">
+            <div class="modal-box max-w-2xl bg-base-100 border border-base-content/10">
+                <h3 class="font-bold text-lg">Recall Past Research</h3>
+                <p class="py-4 text-sm text-base-content/60">
+                    Paste notes, browser logs, or summaries from manual research you did days or weeks ago.
+                    LitPilot will reconstruct the context and build upon it.
+                </p>
+                <textarea class="textarea textarea-bordered w-full h-48 font-mono text-sm" v-model="historyNotes"
+                    placeholder="e.g. Last week I was looking at EMNLP papers on agents. I found 3 papers about decomposition but wanted more focus on multi-model verification..."></textarea>
+                <div class="modal-action">
+                    <button class="btn btn-ghost" @click="showHistoryModal = false">Cancel</button>
+                    <button class="btn btn-primary" :disabled="!historyNotes.trim() || reconstructing"
+                        @click="handleHistoryImport">
+                        <span v-if="reconstructing" class="loading loading-spinner"></span>
+                        {{ reconstructing ? 'Reconstructing...' : 'Restore Context' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- ── Phase 0: Input ────────────────────────── -->
-    <section class="phase-section glass-card" :class="{ collapsed: phase > 0 }">
-      <InputForm
-        v-model="description"
-        :loading="inferring"
-        @submit="handleInferIntent"
-        @files-changed="handleFilesChanged"
-      />
-    </section>
-
-    <!-- ── Phase 1: Intent Review ────────────────── -->
-    <section v-if="phase >= 1" class="phase-section section-gap">
-      <IntentReview
-        :intent="intentData"
-        :loading="executing"
-        @execute="handleExecute"
-      />
-    </section>
-
-    <!-- ── Phase 2: Execution Stream ─────────────── -->
-    <section v-if="phase >= 2" class="phase-section section-gap">
-      <ExecutionStream
-        :events="streamEvents"
-        :done="executionDone"
-        :error="executionError"
-      />
-    </section>
-
-    <!-- ── Phase 3: Final Report ─────────────────── -->
-    <section v-if="phase >= 3" class="phase-section section-gap">
-      <ReportDisplay :content="reportContent" />
-    </section>
-
-    <!-- ── Reset Button ──────────────────────────── -->
-    <div v-if="phase >= 3" class="reset-area section-gap text-center">
-      <button class="btn btn-secondary" @click="resetAll">
-        🔄 Start New Research
-      </button>
-    </div>
-  </div>
 </template>
 
 <script setup>
@@ -78,9 +87,9 @@ import InputForm from '../components/InputForm.vue'
 import IntentReview from '../components/IntentReview.vue'
 import ExecutionStream from '../components/ExecutionStream.vue'
 import ReportDisplay from '../components/ReportDisplay.vue'
-import { inferIntent, executeResearch } from '../composables/useApi.js'
+import { inferIntent, executeResearch, reconstructHistory } from '../composables/useApi.js'
 
-// ── State ──────────────────────────────
+// ── State ──
 const phase = ref(0)          // 0=input, 1=review, 2=executing, 3=report
 const description = ref('')
 const screenshots = ref([])   // array of base64 strings
@@ -93,205 +102,89 @@ const executionDone = ref(false)
 const executionError = ref('')
 const reportContent = ref('')
 
-// ── Handlers ───────────────────────────
+// ── Historical Recall State ──
+const showHistoryModal = ref(false)
+const historyNotes = ref('')
+const reconstructing = ref(false)
+const pastContextSummary = ref('')
 
+// ── Handlers ──
 function handleFilesChanged(base64Files) {
-  screenshots.value = base64Files
+    screenshots.value = base64Files
 }
 
 async function handleInferIntent() {
-  inferring.value = true
-  try {
-    const formattedImages = screenshots.value.map(base64 => ({ url: base64 }))
-    const result = await inferIntent(description.value, formattedImages)
-    intentData.value = result.intent
+    inferring.value = true
     phase.value = 1
-  } catch (err) {
-    alert('Error: ' + err.message)
-  } finally {
-    inferring.value = false
-  }
+    try {
+        const formattedImages = screenshots.value.map(base64 => ({ url: base64 }))
+        const result = await inferIntent(description.value, formattedImages)
+        intentData.value = result.intent
+
+        // Implicit transition: Start execution automatically
+        handleExecute(result.intent)
+    } catch (err) {
+        alert('Error during inference: ' + err.message)
+        phase.value = 0
+    } finally {
+        inferring.value = false
+    }
 }
 
 function handleExecute(intent) {
-  executing.value = true
-  phase.value = 2
-  streamEvents.value = []
-  executionDone.value = false
-  executionError.value = ''
-  reportContent.value = ''
+    executing.value = true
+    phase.value = 2
+    streamEvents.value = []
+    executionDone.value = false
+    executionError.value = ''
+    reportContent.value = ''
 
-  executeResearch(intent, {
-    onEvent(event) {
-      streamEvents.value.push(event)
-    },
-    onDone(content) {
-      reportContent.value = content
-      executionDone.value = true
-      executing.value = false
-      phase.value = 3
-    },
-    onError(msg) {
-      executionError.value = msg
-      executionDone.value = true
-      executing.value = false
-    },
-  })
+    executeResearch(intent, {
+        onEvent(event) {
+            streamEvents.value.push(event)
+        },
+        onDone(content) {
+            reportContent.value = content
+            executionDone.value = true
+            executing.value = false
+            phase.value = 3
+        },
+        onError(msg) {
+            executionError.value = msg
+            executionDone.value = true
+            executing.value = false
+        },
+    })
+}
+
+async function handleHistoryImport() {
+    reconstructing.value = true
+    try {
+        const result = await reconstructHistory(historyNotes.value)
+        description.value = result.reconstructed_intent
+        pastContextSummary.value = result.summary
+        showHistoryModal.value = false
+        // Note: In a real app, we'd save this to a global context or database
+        alert(`Context Restored: ${result.summary}`)
+    } catch (err) {
+        alert('Error during history reconstruction: ' + err.message)
+    } finally {
+        reconstructing.value = false
+    }
 }
 
 function resetAll() {
-  phase.value = 0
-  description.value = ''
-  intentData.value = null
-  streamEvents.value = []
-  executionDone.value = false
-  executionError.value = ''
-  reportContent.value = ''
+    phase.value = 0
+    description.value = ''
+    intentData.value = null
+    streamEvents.value = []
+    executionDone.value = false
+    executionError.value = ''
+    reportContent.value = ''
+    historyNotes.value = ''
 }
 </script>
 
 <style scoped>
-/* ── Hero ────────────────────────────── */
-.hero {
-  text-align: center;
-  padding: 48px 0 16px;
-}
-
-.hero-badge {
-  display: inline-block;
-  padding: 6px 18px;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--accent-text);
-  margin-bottom: 20px;
-}
-
-.hero h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin-bottom: 16px;
-  line-height: 1.1;
-}
-
-.hero-sub {
-  font-size: 1.1rem;
-  max-width: 600px;
-  margin: 0 auto;
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-
-/* ── Steps Bar ──────────────────────── */
-.steps-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin: 40px 0 32px;
-}
-
-.step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  transition: all var(--duration-normal) var(--ease-out);
-}
-
-.step.active {
-  color: var(--accent-text);
-}
-
-.step.done {
-  color: var(--success);
-}
-
-.step-num {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.75rem;
-  font-weight: 700;
-  transition: all var(--duration-normal) var(--ease-out);
-}
-
-.step.active .step-num {
-  background: rgba(6, 182, 212, 0.15);
-  border-color: var(--accent-start);
-  color: var(--accent-text);
-}
-
-.step.done .step-num {
-  background: rgba(52, 211, 153, 0.15);
-  border-color: var(--success);
-  color: var(--success);
-}
-
-.step-line {
-  flex: 0 0 40px;
-  height: 2px;
-  background: var(--border-subtle);
-  transition: background var(--duration-slow);
-}
-
-.step-line.active {
-  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
-}
-
-/* ── Phases ──────────────────────────── */
-.phase-section {
-  transition: all var(--duration-slow) var(--ease-out);
-}
-
-.phase-section.glass-card {
-  padding: 28px;
-}
-
-.phase-section.collapsed {
-  opacity: 0.5;
-  pointer-events: none;
-  transform: scale(0.98);
-}
-
-/* ── Reset ───────────────────────────── */
-.reset-area {
-  padding-bottom: 40px;
-}
-
-/* ── Responsive ──────────────────────── */
-@media (max-width: 768px) {
-  .hero h1 {
-    font-size: 2rem;
-  }
-
-  .hero-sub {
-    font-size: 0.95rem;
-  }
-
-  .steps-bar {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .step-line {
-    display: none;
-  }
-
-  .step-label {
-    display: none;
-  }
-}
+/* Scoped styles kept minimal as we use Tailwind classes */
 </style>
