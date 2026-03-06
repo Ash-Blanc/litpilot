@@ -14,6 +14,7 @@ Stage 2 (Aggregator): Chains summaries to infer the precise high-level
 from textwrap import dedent
 from typing import List, Dict, Any, Optional
 import copy
+import json
 import logging
 
 from agno.agent import Agent

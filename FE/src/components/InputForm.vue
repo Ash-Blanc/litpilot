@@ -8,7 +8,7 @@
         <div class="relative group">
             <textarea id="research-description"
                 class="textarea bg-white/5 border-white/10 w-full min-h-[250px] leading-relaxed transition-all focus:textarea-primary text-base font-medium p-6 rounded-2xl placeholder:opacity-20"
-                v-model="description" :placeholder="placeholder" @input="$emit('update:modelValue', description)"
+                v-model="description" :placeholder="placeholder" @input="handleInput"
                 @paste="handlePaste"></textarea>
 
             <!-- Top Actions -->
@@ -92,10 +92,20 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit', 'files-changed', 'recall-history'])
 
 const description = ref(props.modelValue)
+
+// Watch for external modelValue changes (e.g., when history is imported)
+import { watch } from 'vue'
+watch(() => props.modelValue, (newVal) => {
+    description.value = newVal
+})
 const files = ref([])
 const isDragOver = ref(false)
 const fileInput = ref(null)
 const isFetchingHistory = ref(false)
+
+function handleInput(e) {
+    emit('update:modelValue', description.value)
+}
 
 const placeholder = `Example:
 1. Searched Google Scholar for "decomposed intent extraction web agents"
@@ -195,12 +205,14 @@ async function fetchBrowserHistory() {
 
             newLog += `\nGoal: Please review these sources and summarize the key findings or intent based on the pages visited.`
         } else {
-            newLog += `[Error: ${data.message}]\n`
+            newLog += `[Error: ${data.message}]\n\nTip: Make sure Chrome/Edge/Brave/Firefox is installed and you have recently browsed the web.`
+            alert(data.message || 'No browser history found')
         }
 
         description.value = newLog
         emit('update:modelValue', description.value)
     } catch (err) {
+        console.error('Browser history fetch error:', err)
         alert('Failed to fetch browser history: ' + err.message)
     } finally {
         isFetchingHistory.value = false

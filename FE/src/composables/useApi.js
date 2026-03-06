@@ -54,7 +54,8 @@ export async function inferIntent(description, images = []) {
     stage2Form.append('message', aggPrompt);
     stage2Form.append('stream', 'false');
 
-    res = await fetch(`${API_BASE}/agents/intent-aggregator/runs`, {
+    // Backend registers this agent as "aggregator-mistral" in server.py.
+    res = await fetch(`${API_BASE}/agents/aggregator-mistral/runs`, {
         method: 'POST',
         body: stage2Form,
     });
@@ -98,7 +99,11 @@ export function executeResearch(intent, { onEvent, onDone, onError }) {
     (async () => {
         try {
             const formData = new FormData();
-            formData.append('message', `Execute the following research intent and produce a complete literature review report:\n\n${intent}`);
+            const normalizedIntent = typeof intent === 'string'
+                ? intent
+                : intent?.inferred_intent || JSON.stringify(intent);
+
+            formData.append('message', `Execute the following research intent and produce a complete literature review report:\n\n${normalizedIntent}`);
             formData.append('stream', 'true');
 
             // Send initial manual status

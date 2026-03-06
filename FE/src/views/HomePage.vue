@@ -134,16 +134,23 @@ function handleFilesChanged(base64Files) {
 }
 
 async function handleInferIntent() {
+    if (!description.value.trim()) {
+        alert('Please enter a research description first')
+        return
+    }
     inferring.value = true
     phase.value = 1
     try {
+        console.log('Starting intent inference...')
         const formattedImages = screenshots.value.map(base64 => ({ url: base64 }))
         const result = await inferIntent(description.value, formattedImages)
         intentData.value = result.intent
+        console.log('Intent inferred:', result.intent)
 
         // Implicit transition: Start execution automatically
         handleExecute(result.intent)
     } catch (err) {
+        console.error('Inference error:', err)
         alert('Error during inference: ' + err.message)
         phase.value = 0
     } finally {
@@ -152,6 +159,7 @@ async function handleInferIntent() {
 }
 
 function handleExecute(intent) {
+    console.log('Starting execution with intent:', intent)
     executing.value = true
     phase.value = 2
     streamEvents.value = []
@@ -161,15 +169,18 @@ function handleExecute(intent) {
 
     executeResearch(intent, {
         onEvent(event) {
+            console.log('Stream event:', event)
             streamEvents.value.push(event)
         },
         onDone(content) {
+            console.log('Execution complete, report length:', content?.length)
             reportContent.value = content
             executionDone.value = true
             executing.value = false
             phase.value = 3
         },
         onError(msg) {
+            console.error('Execution error:', msg)
             executionError.value = msg
             executionDone.value = true
             executing.value = false
@@ -178,15 +189,21 @@ function handleExecute(intent) {
 }
 
 async function handleHistoryImport() {
+    if (!historyNotes.value.trim()) {
+        alert('Please enter some notes to reconstruct')
+        return
+    }
     reconstructing.value = true
     try {
+        console.log('Reconstructing history from notes...')
         const result = await reconstructHistory(historyNotes.value)
+        console.log('Reconstructed intent:', result.reconstructed_intent)
         description.value = result.reconstructed_intent
-        pastContextSummary.value = result.summary
+        pastContextSummary.value = result.summary || ''
         showHistoryModal.value = false
-        // Note: In a real app, we'd save this to a global context or database
-        alert(`Context Restored: ${result.summary}`)
+        alert(`Context Restored!\n\n${pastContextSummary.value || 'Research intent has been added to the input field.'}`)
     } catch (err) {
+        console.error('History reconstruction error:', err)
         alert('Error during history reconstruction: ' + err.message)
     } finally {
         reconstructing.value = false
