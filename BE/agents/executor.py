@@ -123,3 +123,12 @@ async def execute_research_async(intent: Dict[str, Any]) -> str:
 def execute_research(intent: Any) -> str:
     """Synchronous wrapper for AgentOS integration."""
     return asyncio.run(execute_research_async(intent))
+
+executor_agent = Agent(
+    name="LitPilot Executor",
+    model=MistralChat(id="mistral-large-latest"),
+    tools=[execute_research],
+    instructions="You are LitPilot's Executor Agent. You must call the `execute_research` tool with the provided intent to orchestrate the search and synthesis, and then return its exact output as your final response.",
+    markdown=True,
+    add_datetime_to_context=True,
+)
